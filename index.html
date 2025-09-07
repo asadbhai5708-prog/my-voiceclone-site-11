@@ -2,44 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Voice Cloning Demo</title>
 </head>
 <body>
   <h1>Voice Cloning Demo</h1>
 
-  <textarea id="text-input" rows="4" cols="40" placeholder="Type something..."></textarea>
+  <textarea id="textInput" placeholder="Enter text here"></textarea>
   <br><br>
-  <button id="generate-btn">Generate</button>
+  <button onclick="generateVoice()">Generate</button>
 
-  <p id="result"></p>
+  <p id="status"></p>
 
-  <script>
-    const backendUrl = "https://ASSI3773-67678.hf.space/run/predict";
-
-    document.getElementById("generate-btn").onclick = async () => {
-      const text = document.getElementById("text-input").value;
-      document.getElementById("result").innerText = "Loading...";
-
-      try {
-        const response = await fetch(backendUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            data: [text]   // Gradio expects input inside array
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error("HTTP " + response.status);
-        }
-
-        const result = await response.json();
-        // result.data[0] contains output from backend
-        document.getElementById("result").innerText = result.data[0];
-      } catch (err) {
-        document.getElementById("result").innerText = "Request failed: " + err.message;
-      }
-    };
-  </script>
+  <!-- JS file link -->
+  <script src="script.js"></script>
 </body>
 </html>
