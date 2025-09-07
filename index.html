@@ -6,12 +6,11 @@
   <title>Voice Cloning Demo</title>
   <style>
     body { font-family: system-ui, Arial, sans-serif; margin: 24px; }
-    h1 { font-size: 36px; margin-bottom: 16px; }
+    h1 { font-size: 32px; margin-bottom: 16px; }
     .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
     textarea { width: 320px; height: 60px; }
-    input[type="text"] { width: 420px; }
     button { padding: 8px 14px; cursor: pointer; }
-    #status { margin-top: 8px; min-height: 20px; }
+    #status { margin-top: 8px; min-height: 20px; color: #444; }
     #outputText { margin-top: 12px; font-weight: 600; }
     audio { display: none; margin-top: 12px; }
   </style>
@@ -19,15 +18,7 @@
 <body>
   <h1>Voice Cloning Demo</h1>
 
-  <!-- Backend URL (اپنا hf.space لنک یہاں پیسٹ کریں، مثلاً https://USERNAME-SPACENAME.hf.space) -->
   <div class="row">
-    <label for="apiUrl"><strong>Backend URL:</strong></label>
-    <input id="apiUrl" type="text" placeholder="https://YOUR-SPACE.hf.space" />
-    <button id="saveUrlBtn">Save</button>
-  </div>
-
-  <div class="row">
-    <input type="file" id="voiceFile" accept="audio/*" />
     <textarea id="text" placeholder="Enter text to synthesize"></textarea>
     <button id="generateBtn">Generate</button>
   </div>
@@ -37,42 +28,29 @@
   <audio id="player" controls></audio>
 
   <script>
-    // --- Helpers ---
-    const $ = (id) => document.getElementById(id);
-    const statusEl = $("status");
-    const outText = $("outputText");
-    const player = $("player");
+    // ✅ Backend URL fixed
+    const API_BASE = "https://ASSI3773-67678.hf.space";
+    const endpoint = API_BASE + "/run/predict";
 
-    // load/save backend URL locally so آپ کو کوڈ نہیں چھیڑنا پڑے
-    const LS_KEY = "HF_BACKEND_URL";
-    const saved = localStorage.getItem(LS_KEY);
-    if (saved) $("apiUrl").value = saved;
+    const statusEl = document.getElementById("status");
+    const outText = document.getElementById("outputText");
+    const player = document.getElementById("player");
 
-    $("saveUrlBtn").addEventListener("click", () => {
-      const url = $("apiUrl").value.trim();
-      if (!url) { alert("Please paste your hf.space URL"); return; }
-      localStorage.setItem(LS_KEY, url);
-      alert("Saved!");
-    });
-
-    $("generateBtn").addEventListener("click", generateVoice);
+    document.getElementById("generateBtn").addEventListener("click", generateVoice);
 
     async function generateVoice() {
       outText.textContent = "";
       player.src = "";
       player.style.display = "none";
 
-      const API_BASE = (localStorage.getItem(LS_KEY) || $("apiUrl").value || "").trim();
-      if (!API_BASE) { alert("First paste & save your hf.space URL above."); return; }
-
-      const text = $("text").value.trim();
-      if (!text) { alert("Please type some text first."); return; }
-
-      // اگر آپ کا backend ابھی Gradio test (Hello …) ہے تو یہ endpoint درست ہے:
-      // /run/predict  — body: { data: [text] }
-      const endpoint = API_BASE.replace(/\/+$/,"") + "/run/predict";
+      const text = document.getElementById("text").value.trim();
+      if (!text) {
+        alert("Please type some text first.");
+        return;
+      }
 
       statusEl.textContent = "Sending request…";
+
       try {
         const res = await fetch(endpoint, {
           method: "POST",
@@ -80,40 +58,31 @@
           body: JSON.stringify({ data: [text] })
         });
 
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
+        if (!res.ok) throw new Error("HTTP " + res.status);
         const json = await res.json();
-        // Gradio JSON شکل: { data: [value, ...], ... }
         const value = json?.data?.[0];
 
         statusEl.textContent = "Done.";
-        // اگر جواب text ہے (جیسے Hello Asad!)
+
         if (typeof value === "string" && !/^https?:\/\//i.test(value)) {
           outText.textContent = value;
           return;
         }
-        // اگر جواب میں کوئی URL آیا (ممکنہ audio/file)
         if (typeof value === "string" && /^https?:\/\//i.test(value)) {
           outText.textContent = "Audio received.";
           player.src = value;
           player.style.display = "block";
-          await player.play().catch(() => {/* autoplay may be blocked */});
+          await player.play().catch(() => {});
           return;
         }
-        // اگر جواب blob-style ہوا تو (کم کیسز)
-        if (value && value.data) {
-          outText.textContent = "Response received.";
-        } else {
-          outText.textContent = JSON.stringify(json);
-        }
+
+        outText.textContent = JSON.stringify(json);
       } catch (err) {
         statusEl.textContent = "";
-        outText.textContent = "Request failed: " + (err?.message || err);
+        outText.textContent = "Request failed: " + (err.message || err);
         console.error(err);
       }
     }
   </script>
 </body>
 </html>
-https://huggingface.co/spaces/ASSI3773/67678
