@@ -41,3 +41,4 @@ async function generateVoice() {
     status.textContent = "Error: " + err.message;
   }
 }
+fetch("https://assi3773-67678.hf.space/run/predict", {
