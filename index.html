@@ -7,33 +7,39 @@
 <body>
   <h1>Voice Cloning Demo</h1>
 
-  <textarea id="text" placeholder="Enter text"></textarea>
-  <button onclick="generateVoice()">Generate</button>
+  <textarea id="text-input" rows="4" cols="40" placeholder="Type something..."></textarea>
+  <br><br>
+  <button id="generate-btn">Generate</button>
 
-  <p id="output"></p>
+  <p id="result"></p>
 
   <script>
-    async function generateVoice() {
-      const text = document.getElementById("text").value;
-      const output = document.getElementById("output");
+    const backendUrl = "https://ASSI3773-67678.hf.space/run/predict";
+
+    document.getElementById("generate-btn").onclick = async () => {
+      const text = document.getElementById("text-input").value;
+      document.getElementById("result").innerText = "Loading...";
 
       try {
-        const response = await fetch("https://ASSI3773-67678.hf.space/run/predict", {
+        const response = await fetch(backendUrl, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            data: [text]
+            data: [text]   // Gradio expects input inside array
           })
         });
 
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+
         const result = await response.json();
-        output.innerText = "Response: " + result.data[0];
+        // result.data[0] contains output from backend
+        document.getElementById("result").innerText = result.data[0];
       } catch (err) {
-        output.innerText = "Error: " + err;
+        document.getElementById("result").innerText = "Request failed: " + err.message;
       }
-    }
+    };
   </script>
 </body>
 </html>
