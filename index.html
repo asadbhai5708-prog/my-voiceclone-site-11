@@ -1,86 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
   <title>Voice Cloning Demo</title>
-  <style>
-    body { font-family: system-ui, Arial, sans-serif; margin: 24px; }
-    h1 { font-size: 32px; margin-bottom: 16px; }
-    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-    textarea { width: 320px; height: 60px; }
-    button { padding: 8px 14px; cursor: pointer; }
-    #status { margin-top: 8px; min-height: 20px; color: #444; }
-    #outputText { margin-top: 12px; font-weight: 600; }
-    audio { display: none; margin-top: 12px; }
-  </style>
 </head>
 <body>
   <h1>Voice Cloning Demo</h1>
 
-  <div class="row">
-    <textarea id="text" placeholder="Enter text to synthesize"></textarea>
-    <button id="generateBtn">Generate</button>
-  </div>
+  <textarea id="text" placeholder="Enter text"></textarea>
+  <button onclick="generateVoice()">Generate</button>
 
-  <div id="status"></div>
-  <div id="outputText"></div>
-  <audio id="player" controls></audio>
+  <p id="output"></p>
 
   <script>
-    // ✅ Backend URL fixed
-    const API_BASE = "https://ASSI3773-67678.hf.space";
-    const endpoint = API_BASE + "/run/predict";
-
-    const statusEl = document.getElementById("status");
-    const outText = document.getElementById("outputText");
-    const player = document.getElementById("player");
-
-    document.getElementById("generateBtn").addEventListener("click", generateVoice);
-
     async function generateVoice() {
-      outText.textContent = "";
-      player.src = "";
-      player.style.display = "none";
-
-      const text = document.getElementById("text").value.trim();
-      if (!text) {
-        alert("Please type some text first.");
-        return;
-      }
-
-      statusEl.textContent = "Sending request…";
+      const text = document.getElementById("text").value;
+      const output = document.getElementById("output");
 
       try {
-        const res = await fetch(endpoint, {
+        const response = await fetch("https://ASSI3773-67678.hf.space/run/predict", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data: [text] })
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            data: [text]
+          })
         });
 
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const json = await res.json();
-        const value = json?.data?.[0];
-
-        statusEl.textContent = "Done.";
-
-        if (typeof value === "string" && !/^https?:\/\//i.test(value)) {
-          outText.textContent = value;
-          return;
-        }
-        if (typeof value === "string" && /^https?:\/\//i.test(value)) {
-          outText.textContent = "Audio received.";
-          player.src = value;
-          player.style.display = "block";
-          await player.play().catch(() => {});
-          return;
-        }
-
-        outText.textContent = JSON.stringify(json);
+        const result = await response.json();
+        output.innerText = "Response: " + result.data[0];
       } catch (err) {
-        statusEl.textContent = "";
-        outText.textContent = "Request failed: " + (err.message || err);
-        console.error(err);
+        output.innerText = "Error: " + err;
       }
     }
   </script>
